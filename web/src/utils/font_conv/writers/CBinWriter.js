@@ -1,5 +1,5 @@
 // CBIN format writer - ES6 version
-// 将字体数据写成 CBIN 格式
+// write_the_font_data_as CBIN format
 
 import AppError from '../AppError.js'
 import CBinFont from './CBinFont.js'

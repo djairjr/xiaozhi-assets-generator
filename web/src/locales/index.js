@@ -20,7 +20,7 @@ export const languageOptions = [
   { code: 'vi', name: 'Tiếng Việt', flag: '🇻🇳' }
 ]
 
-// 获取浏览器语言
+// get_browser_language
 export function getBrowserLanguage() {
   const browserLang = navigator.language || navigator.userLanguage
   const langMap = {

@@ -1,5 +1,5 @@
 // Merge ranges into single object
-// ES6 版本
+// ES6 version
 
 class Ranger {
   constructor() {

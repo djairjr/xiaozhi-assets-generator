@@ -1,28 +1,30 @@
-/**
- * SpiffsGenerator 类
- * 模仿 spiffs_assets_gen.py 的功能，用于在浏览器端生成 assets.bin 文件
+/*
+*
+ * SpiffsGenerator kind
+ * imitate spiffs_assets_gen.py function，used_to_generate_on_the_browser_side assets.bin document
  * 
- * 文件格式：
+ * file_format：
  * {
- *     total_files: int (4字节)          // 文件总数
- *     checksum: int (4字节)            // 校验和
- *     combined_data_length: int (4字节) // 数据总长度
- *     mmap_table: [                    // 文件映射表
+* total_files: int (4 bytes) // total_number_of_files
+* checksum: int (4 bytes) // checksum
+* combined_data_length: int (4 bytes) // total_length_of_data
+ *     mmap_table: [                    // file_mapping_table
  *         {
- *             name: char[32]           // 文件名 (32字节)
- *             size: int (4字节)        // 文件大小
- *             offset: int (4字节)      // 文件偏移量 
- *             width: short (2字节)     // 图片宽度
- *             height: short (2字节)    // 图片高度
+* name: char[32] // file_name (32 bytes)
+* size: int (4 bytes) // file_size
+* offset: int (4 bytes) // file_offset
+* width: short (2 bytes) // image_width
+* height: short (2 bytes) // image_height
  *         }
  *         ...
  *     ]
- *     file_data: [                     // 文件数据
- *         0x5A 0x5A + file1_data      // 每个文件前面加0x5A5A标识
+ *     file_data: [                     // file_data
+ *         0x5A 0x5A + file1_data      // add_the_0x5a5a_mark_in_front_of_each_file
  *         0x5A 0x5A + file2_data
  *         ...
  *     ]
  * }
+*/
  */
 
 class SpiffsGenerator {
@@ -32,10 +34,10 @@ class SpiffsGenerator {
   }
 
   /**
-   * 添加文件
-   * @param {string} filename - 文件名
-   * @param {ArrayBuffer} data - 文件数据
-   * @param {Object} options - 可选参数 {width?, height?}
+   * add_files
+   * @param {string} filename - file_name
+   * @param {ArrayBuffer} data - file_data
+   * @param {Object} options - optional_parameters {width?, height?}
    */
   addFile(filename, data, options = {}) {
     if (filename.length > 32) {
@@ -52,8 +54,8 @@ class SpiffsGenerator {
   }
 
   /**
-   * 从图片文件获取尺寸信息
-   * @param {ArrayBuffer} imageData - 图片数据
+   * get_size_information_from_image_file
+   * @param {ArrayBuffer} imageData - image_data
    * @returns {Promise<Object>} {width, height}
    */
   async getImageDimensions(imageData) {
@@ -81,9 +83,9 @@ class SpiffsGenerator {
   }
 
   /**
-   * 检查是否为特殊图片格式 (.sjpg, .spng, .sqoi)
-   * @param {string} filename - 文件名
-   * @param {ArrayBuffer} data - 文件数据
+   * check_whether_it_is_a_special_image_format (.sjpg, .spng, .sqoi)
+   * @param {string} filename - file_name
+   * @param {ArrayBuffer} data - file_data
    * @returns {Object} {width, height}
    */
   parseSpecialImageFormat(filename, data) {
@@ -91,10 +93,10 @@ class SpiffsGenerator {
     
     if (['.sjpg', '.spng', '.sqoi'].includes('.' + ext)) {
       try {
-        // 特殊格式的头部结构：偏移14字节后是宽度和高度（各2字节，小端序）
+        // specially_formatted_header_structure：offset_by_14_bytes_are_the_width_and_height（var_2_bytes_each，little_endian）
         const view = new DataView(data)
-        const width = view.getUint16(14, true)  // 小端序
-        const height = view.getUint16(16, true) // 小端序
+        const width = view.getUint16(14, true)  // little_endian
+        const height = view.getUint16(16, true) // little_endian
         return { width, height }
       } catch (error) {
         console.warn(`Failed to parse special image format: ${filename}`, error)
@@ -104,11 +106,12 @@ class SpiffsGenerator {
     return { width: 0, height: 0 }
   }
 
-  /**
-   * 将32位整数转换为小端序字节数组
-   * @param {number} value - 整数值
-   * @returns {Uint8Array} 4字节的小端序数组
-   */
+  /*
+*
+   * convert_32bit_integer_to_littleendian_byte_array
+   * @param {number} value - integer_value
+* @returns {Uint8Array} 4-byte little-endian array
+*/
   packUint32(value) {
     const bytes = new Uint8Array(4)
     bytes[0] = value & 0xFF
@@ -118,11 +121,12 @@ class SpiffsGenerator {
     return bytes
   }
 
-  /**
-   * 将16位整数转换为小端序字节数组
-   * @param {number} value - 整数值
-   * @returns {Uint8Array} 2字节的小端序数组
-   */
+  /*
+*
+   * convert_16bit_integer_to_littleendian_byte_array
+   * @param {number} value - integer_value
+* @returns {Uint8Array} 2-byte little-endian array
+*/
   packUint16(value) {
     const bytes = new Uint8Array(2)
     bytes[0] = value & 0xFF
@@ -131,28 +135,29 @@ class SpiffsGenerator {
   }
 
   /**
-   * 将字符串打包为固定长度的二进制数据
-   * @param {string} string - 输入字符串
-   * @param {number} maxLen - 最大长度
-   * @returns {Uint8Array} 打包后的二进制数据
+   * pack_a_string_into_fixedlength_binary_data
+   * @param {string} string - input_string
+   * @param {number} maxLen - maximum_length
+   * @returns {Uint8Array} packed_binary_data
    */
   packString(string, maxLen) {
     const bytes = new Uint8Array(maxLen)
     const encoded = this.textEncoder.encode(string)
     
-    // 复制字符串数据，确保不超过最大长度
+    // copy_string_data，make_sure_not_to_exceed_the_maximum_length
     const copyLen = Math.min(encoded.length, maxLen)
     bytes.set(encoded.slice(0, copyLen), 0)
     
-    // 剩余字节为0填充
+    // the_remaining_bytes_are_padded_with_0
     return bytes
   }
 
-  /**
-   * 计算校验和
-   * @param {Uint8Array} data - 数据
-   * @returns {number} 16位校验和
-   */
+  /*
+*
+   * calculate_checksum
+   * @param {Uint8Array} data - data
+* @returns {number} 16-bit checksum
+*/
   computeChecksum(data) {
     let checksum = 0
     for (let i = 0; i < data.length; i++) {
@@ -162,9 +167,9 @@ class SpiffsGenerator {
   }
 
   /**
-   * 对文件进行排序
-   * @param {Array} files - 文件列表
-   * @returns {Array} 排序后的文件列表
+   * sort_files
+   * @param {Array} files - file_list
+   * @returns {Array} sorted_file_list
    */
   sortFiles(files) {
     return files.slice().sort((a, b) => {
@@ -182,9 +187,9 @@ class SpiffsGenerator {
   }
 
   /**
-   * 生成 assets.bin 文件
-   * @param {Function} progressCallback - 进度回调函数
-   * @returns {Promise<ArrayBuffer>} 生成的 assets.bin 数据
+   * generate assets.bin document
+   * @param {Function} progressCallback - progress_callback_function
+   * @returns {Promise<ArrayBuffer>} generated assets.bin data
    */
   async generate(progressCallback = null) {
     if (this.files.length === 0) {
@@ -193,11 +198,11 @@ class SpiffsGenerator {
 
     if (progressCallback) progressCallback(0, 'Starting to package files...')
 
-    // 排序文件
+    // sort_files
     const sortedFiles = this.sortFiles(this.files)
     const totalFiles = sortedFiles.length
 
-    // 处理文件信息并获取图片尺寸
+    // process_file_information_and_obtain_image_dimensions
     const fileInfoList = []
     let mergedDataSize = 0
 
@@ -210,15 +215,15 @@ class SpiffsGenerator {
         progressCallback(10 + (i / totalFiles) * 30, `Processing file: ${file.filename}`)
       }
 
-      // 如果没有提供尺寸信息，尝试自动获取
+      // if_no_size_information_is_provided，try_to_get_it_automatically
       if (width === 0 && height === 0) {
-        // 先检查特殊图片格式
+        // check_special_image_formats_first
         const specialDimensions = this.parseSpecialImageFormat(file.filename, file.data)
         if (specialDimensions.width > 0 || specialDimensions.height > 0) {
           width = specialDimensions.width
           height = specialDimensions.height
         } else {
-          // 尝试作为普通图片解析
+          // try_to_parse_as_a_normal_image
           const ext = file.filename.toLowerCase().split('.').pop()
           if (['png', 'jpg', 'jpeg', 'gif', 'bmp', 'webp'].includes(ext)) {
             const dimensions = await this.getImageDimensions(file.data)
@@ -237,41 +242,41 @@ class SpiffsGenerator {
         height
       })
 
-      mergedDataSize += 2 + file.size // 2字节前缀 + 文件数据
+      mergedDataSize += 2 + file.size // 2-byte prefix + file_data
     }
 
     if (progressCallback) progressCallback(40, 'Building file mapping table...')
 
-    // 构建映射表
+    // build_mapping_table
     const mmapTableSize = totalFiles * (32 + 4 + 4 + 2 + 2) // name + size + offset + width + height
     const mmapTable = new Uint8Array(mmapTableSize)
     let mmapOffset = 0
 
     for (const fileInfo of fileInfoList) {
-      // 文件名 (32字节)
+      // file_name (32 bytes)
       mmapTable.set(this.packString(fileInfo.filename, 32), mmapOffset)
       mmapOffset += 32
 
-      // 文件大小 (4字节)
+      // file_size (4 bytes)
       mmapTable.set(this.packUint32(fileInfo.size), mmapOffset)
       mmapOffset += 4
 
-      // 文件偏移 (4字节)
+      // file_offset (4 bytes)
       mmapTable.set(this.packUint32(fileInfo.offset), mmapOffset)
       mmapOffset += 4
 
-      // 图片宽度 (2字节)
+      // image_width (2 bytes)
       mmapTable.set(this.packUint16(fileInfo.width), mmapOffset)
       mmapOffset += 2
 
-      // 图片高度 (2字节)  
+      // image_height (2 bytes)
       mmapTable.set(this.packUint16(fileInfo.height), mmapOffset)
       mmapOffset += 2
     }
 
     if (progressCallback) progressCallback(60, 'Merging file data...')
 
-    // 合并文件数据
+    // merge_file_data
     const mergedData = new Uint8Array(mergedDataSize)
     let mergedOffset = 0
 
@@ -282,19 +287,19 @@ class SpiffsGenerator {
         progressCallback(60 + (i / totalFiles) * 20, `Merging file: ${fileInfo.filename}`)
       }
 
-      // 添加0x5A5A前缀
+      // add_0x5a5a_prefix
       mergedData[mergedOffset] = 0x5A
       mergedData[mergedOffset + 1] = 0x5A
       mergedOffset += 2
 
-      // 添加文件数据
+      // add_file_data
       mergedData.set(new Uint8Array(fileInfo.data), mergedOffset)
       mergedOffset += fileInfo.size
     }
 
     if (progressCallback) progressCallback(80, 'Computing checksum...')
 
-    // 计算组合数据的校验和
+    // compute_checksum_of_combined_data
     const combinedData = new Uint8Array(mmapTableSize + mergedDataSize)
     combinedData.set(mmapTable, 0)
     combinedData.set(mergedData, mmapTableSize)
@@ -304,26 +309,26 @@ class SpiffsGenerator {
 
     if (progressCallback) progressCallback(90, 'Building final file...')
 
-    // 构建最终输出
+    // build_final_output
     const headerSize = 4 + 4 + 4 // total_files + checksum + combined_data_length
     const totalSize = headerSize + combinedDataLength
     const finalData = new Uint8Array(totalSize)
     
     let offset = 0
 
-    // 写入文件总数
+    // total_number_of_files_written
     finalData.set(this.packUint32(totalFiles), offset)
     offset += 4
 
-    // 写入校验和
+    // write_checksum
     finalData.set(this.packUint32(checksum), offset)
     offset += 4
 
-    // 写入组合数据长度
+    // write_combined_data_length
     finalData.set(this.packUint32(combinedDataLength), offset)
     offset += 4
 
-    // 写入组合数据
+    // write_combined_data
     finalData.set(combinedData, offset)
 
     if (progressCallback) progressCallback(100, 'Packaging completed')
@@ -332,8 +337,8 @@ class SpiffsGenerator {
   }
 
   /**
-   * 获取文件统计信息
-   * @returns {Object} 统计信息
+   * get_file_statistics
+   * @returns {Object} statistics
    */
   getStats() {
     let totalSize = 0
@@ -355,7 +360,7 @@ class SpiffsGenerator {
   }
 
   /**
-   * 打印打包的文件列表
+   * print_a_list_of_packed_files
    */
   printFileList() {
     console.log('=== Packaged File List ===')
@@ -366,7 +371,7 @@ class SpiffsGenerator {
       return
     }
 
-    // 按扩展名和文件名排序后打印
+    // Print after sorting by extension and file name
     const sortedFiles = this.sortFiles(this.files)
 
     sortedFiles.forEach((file, index) => {
@@ -381,7 +386,7 @@ class SpiffsGenerator {
       console.log('')
     })
 
-    // 打印统计信息
+    // print_statistics
     const stats = this.getStats()
     console.log('=== File Statistics ===')
     console.log(`Total size: ${(stats.totalSize / 1024).toFixed(2)} KB`)
@@ -393,7 +398,7 @@ class SpiffsGenerator {
   }
 
   /**
-   * 清理文件列表
+   * clean_file_list
    */
   clear() {
     this.files = []

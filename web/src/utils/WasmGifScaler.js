@@ -1,36 +1,36 @@
 /**
- * WasmGifScaler 类
- * 使用 gifsicle-wasm-browser 进行 GIF 图片缩放处理
+ * WasmGifScaler kind
+ * use gifsicle-wasm-browser conduct GIF image_scaling
  * 
- * 主要功能：
- * - GIF 图片缩放
- * - 保持宽高比
- * - GIF 优化压缩
- * - 多种缩放模式
+ * main_functions：
+ * - GIF image_zoom
+ * - keep_aspect_ratio
+ * - GIF optimize_compression
+ * - multiple_zoom_modes
  */
 
 import gifsicle from 'gifsicle-wasm-browser'
 
 class WasmGifScaler {
   constructor(options = {}) {
-    this.quality = options.quality || 10 // 1-200, lossy 压缩质量
+    this.quality = options.quality || 10 // 1-200, lossy compression_quality
     this.debug = options.debug || false
     this.scalingMode = options.scalingMode || 'auto' // 'auto', 'fit', 'fill'
-    this.optimize = options.optimize !== false // 默认启用优化
-    this.optimizationLevel = options.optimizationLevel || 2 // 1-3, 优化级别
+    this.optimize = options.optimize !== false // optimization_enabled_by_default
+    this.optimizationLevel = options.optimizationLevel || 2 // 1-3, optimization_level
   }
 
   /**
-   * 缩放 GIF 图片
-   * @param {File|Blob|ArrayBuffer} gifFile - GIF 文件
-   * @param {Object} options - 缩放选项
-   * @param {number} options.maxWidth - 最大宽度
-   * @param {number} options.maxHeight - 最大高度
-   * @param {boolean} options.keepAspectRatio - 是否保持宽高比，默认 true
-   * @param {boolean} options.optimize - 是否优化，默认 true
-   * @param {number} options.lossy - lossy 压缩质量 (1-200)，默认使用实例配置
-   * @param {number} options.loopCount - 循环次数，0 表示无限循环（默认），-1 表示保持原样
-   * @returns {Promise<Blob>} 缩放后的 GIF Blob
+   * zoom GIF picture
+   * @param {File|Blob|ArrayBuffer} gifFile - GIF document
+   * @param {Object} options - zoom_options
+   * @param {number} options.maxWidth - maximum_width
+   * @param {number} options.maxHeight - maximum_height
+   * @param {boolean} options.keepAspectRatio - whether_to_maintain_aspect_ratio，default true
+   * @param {boolean} options.optimize - optimize_or_not，default true
+   * @param {number} options.lossy - lossy compression_quality (1-200)，use_instance_configuration_by_default
+   * @param {number} options.loopCount - number_of_cycles，0 indicates_infinite_loop（default），-1 means_to_keep_it_as_it_is
+   * @returns {Promise<Blob>} scaled GIF Blob
    */
   async scaleGif(gifFile, options = {}) {
     const {
@@ -39,53 +39,53 @@ class WasmGifScaler {
       keepAspectRatio = true,
       optimize = this.optimize,
       lossy = this.quality,
-      loopCount = 0  // 默认无限循环
+      loopCount = 0  // default_infinite_loop
     } = options
 
     if (!maxWidth && !maxHeight) {
-      throw new Error('必须指定 maxWidth 或 maxHeight')
+      throw new Error('必须指定 maxWidth or maxHeight')
     }
 
     try {
-      // 构建 resize 命令
+      // build resize order
       let resizeCmd
       if (keepAspectRatio) {
-        // 保持宽高比的缩放，使用 --resize-fit
+        // scale_to_maintain_aspect_ratio，use --resize-fit
         const width = maxWidth || '_'
         const height = maxHeight || '_'
         resizeCmd = `--resize-fit ${width}x${height}`
       } else {
-        // 强制缩放到指定尺寸，使用 --resize
+        // force_zoom_to_specified_size，use --resize
         const width = maxWidth || '_'
         const height = maxHeight || '_'
         resizeCmd = `--resize ${width}x${height}!`
       }
 
-      // 构建完整的 gifsicle 命令
+      // build_a_complete gifsicle order
       const commandParts = []
       
-      // 添加 unoptimize 确保正确处理
+      // add_to unoptimize make_sure_to_handle_it_correctly
       commandParts.push('-U')
       
-      // 添加 resize 命令
+      // add_to resize order
       commandParts.push(resizeCmd)
       
-      // 添加循环次数设置（loopCount >= 0 时生效，-1 表示不设置）
+      // add_loop_count_setting（loopCount >= 0 effective_when，-1 indicates_not_setting）
       if (loopCount >= 0) {
         commandParts.push(`--loopcount=${loopCount}`)
       }
       
-      // 添加 lossy 压缩
+      // add_to lossy compression
       if (lossy && lossy > 0) {
         commandParts.push(`--lossy=${lossy}`)
       }
       
-      // 添加优化
+      // add_optimization
       if (optimize) {
         commandParts.push(`-O${this.optimizationLevel}`)
       }
       
-      // 输入输出
+      // input_and_output
       commandParts.push('1.gif')
       commandParts.push('-o /out/output.gif')
       
@@ -96,7 +96,7 @@ class WasmGifScaler {
         console.log('输入文件大小:', gifFile.size || '未知')
       }
 
-      // 调用 gifsicle
+      // call gifsicle
       const result = await gifsicle.run({
         input: [{
           file: gifFile,
@@ -106,7 +106,7 @@ class WasmGifScaler {
       })
 
       if (!result || result.length === 0) {
-        throw new Error('gifsicle 处理失败，未返回结果')
+        throw new Error('gifsicle processing_failed，未返回结果')
       }
 
       const outputFile = result[0]
@@ -116,23 +116,23 @@ class WasmGifScaler {
         console.log('输出文件大小:', outputFile.size)
         if (gifFile.size) {
           const ratio = ((1 - outputFile.size / gifFile.size) * 100).toFixed(2)
-          console.log(`压缩率: ${ratio}%`)
+          console.log(`compression_rate: ${ratio}%`)
         }
       }
 
-      // 转换为 Blob
+      // convert_to Blob
       return new Blob([outputFile], { type: 'image/gif' })
       
     } catch (error) {
       console.error('GIF 缩放失败:', error)
-      throw new Error(`GIF 缩放失败: ${error.message}`)
+      throw new Error(`GIF zoom_failed: ${error.message}`)
     }
   }
 
   /**
-   * 批量缩放 GIF 图片
-   * @param {Array} files - GIF 文件数组 [{file, options}]
-   * @returns {Promise<Array>} 缩放后的 GIF Blob 数组
+   * batch_scaling GIF picture
+   * @param {Array} files - GIF file_array [{file, options}]
+   * @returns {Promise<Array>} scaled GIF Blob array
    */
   async scaleGifBatch(files) {
     const results = []
@@ -143,7 +143,7 @@ class WasmGifScaler {
         const result = await this.scaleGif(file, options)
         results.push(result)
       } catch (error) {
-        console.error(`批量缩放第 ${i + 1} 个文件失败:`, error)
+        console.error(`batch_scaling ${i + 1} files_failed:`, error)
         results.push(null)
       }
     }
@@ -152,25 +152,25 @@ class WasmGifScaler {
   }
 
   /**
-   * 优化 GIF（不改变尺寸）
-   * @param {File|Blob|ArrayBuffer} gifFile - GIF 文件
-   * @param {Object} options - 优化选项
-   * @param {number} options.lossy - lossy 压缩质量 (1-200)
-   * @param {number} options.level - 优化级别 (1-3)
-   * @param {number} options.loopCount - 循环次数，0 表示无限循环（默认），-1 表示保持原样
-   * @returns {Promise<Blob>} 优化后的 GIF Blob
+   * optimization GIF（do_not_change_size）
+   * @param {File|Blob|ArrayBuffer} gifFile - GIF document
+   * @param {Object} options - optimization_options
+   * @param {number} options.lossy - lossy compression_quality (1-200)
+   * @param {number} options.level - optimization_level (1-3)
+   * @param {number} options.loopCount - number_of_cycles，0 indicates_infinite_loop（default），-1 means_to_keep_it_as_it_is
+   * @returns {Promise<Blob>} optimized GIF Blob
    */
   async optimizeGif(gifFile, options = {}) {
     const {
       lossy = this.quality,
       level = this.optimizationLevel,
-      loopCount = 0  // 默认无限循环
+      loopCount = 0  // default_infinite_loop
     } = options
 
     try {
       const commandParts = ['-U']
       
-      // 添加循环次数设置
+      // add_loop_count_setting
       if (loopCount >= 0) {
         commandParts.push(`--loopcount=${loopCount}`)
       }
@@ -205,14 +205,14 @@ class WasmGifScaler {
       
     } catch (error) {
       console.error('GIF 优化失败:', error)
-      throw new Error(`GIF 优化失败: ${error.message}`)
+      throw new Error(`GIF optimization_failed: ${error.message}`)
     }
   }
 
   /**
-   * 获取 GIF 信息
-   * @param {File|Blob|ArrayBuffer} gifFile - GIF 文件
-   * @returns {Promise<Object>} GIF 信息
+   * get GIF information
+   * @param {File|Blob|ArrayBuffer} gifFile - GIF document
+   * @returns {Promise<Object>} GIF information
    */
   async getGifInfo(gifFile) {
     try {
@@ -231,14 +231,14 @@ class WasmGifScaler {
       const infoFile = result[0]
       const infoText = await infoFile.text()
       
-      // 解析信息文本
+      // parse_message_text
       const info = this.parseGifInfo(infoText)
       
       return info
       
     } catch (error) {
       console.error('获取 GIF 信息失败:', error)
-      // 返回基本信息
+      // return_to_basic_information
       return {
         size: gifFile.size || 0,
         type: 'image/gif'
@@ -247,9 +247,9 @@ class WasmGifScaler {
   }
 
   /**
-   * 解析 GIF 信息文本
-   * @param {string} infoText - gifsicle --info 输出的文本
-   * @returns {Object} 解析后的信息对象
+   * parse GIF information_text
+   * @param {string} infoText - gifsicle --info output_text
+   * @returns {Object} parsed_information_object
    */
   parseGifInfo(infoText) {
     const info = {
@@ -261,26 +261,26 @@ class WasmGifScaler {
     }
 
     try {
-      // 解析帧数
+      // Number of parsed frames
       const framesMatch = infoText.match(/(\d+) images?/)
       if (framesMatch) {
         info.frames = parseInt(framesMatch[1])
       }
 
-      // 解析尺寸
+      // parse_size
       const sizeMatch = infoText.match(/logical screen (\d+)x(\d+)/)
       if (sizeMatch) {
         info.width = parseInt(sizeMatch[1])
         info.height = parseInt(sizeMatch[2])
       }
 
-      // 解析颜色数
+      // parse_color_number
       const colorsMatch = infoText.match(/(\d+) colors/)
       if (colorsMatch) {
         info.colors = parseInt(colorsMatch[1])
       }
 
-      // 解析循环次数
+      // number_of_parsing_loops
       if (infoText.includes('loop forever')) {
         info.loopCount = 0
       } else {
@@ -297,10 +297,10 @@ class WasmGifScaler {
   }
 
   /**
-   * 裁剪 GIF
-   * @param {File|Blob|ArrayBuffer} gifFile - GIF 文件
-   * @param {Object} cropRect - 裁剪区域 {x, y, width, height}
-   * @returns {Promise<Blob>} 裁剪后的 GIF Blob
+   * crop GIF
+   * @param {File|Blob|ArrayBuffer} gifFile - GIF document
+   * @param {Object} cropRect - crop_area {x, y, width, height}
+   * @returns {Promise<Blob>} cropped GIF Blob
    */
   async cropGif(gifFile, cropRect) {
     const { x, y, width, height } = cropRect
@@ -333,31 +333,31 @@ class WasmGifScaler {
       
     } catch (error) {
       console.error('GIF 裁剪失败:', error)
-      throw new Error(`GIF 裁剪失败: ${error.message}`)
+      throw new Error(`GIF cropping_failed: ${error.message}`)
     }
   }
 
   /**
-   * 清理资源
+   * clean_up_resources
    */
   dispose() {
-    // gifsicle-wasm-browser 不需要特殊的清理
+    // gifsicle-wasm-browser no_special_cleanup_required
     if (this.debug) {
       console.log('WasmGifScaler disposed')
     }
   }
 
   /**
-   * 设置调试模式
-   * @param {boolean} enabled - 是否启用调试
+   * set_debug_mode
+   * @param {boolean} enabled - whether_to_enable_debugging
    */
   setDebug(enabled) {
     this.debug = enabled
   }
 
   /**
-   * 设置压缩质量
-   * @param {number} quality - 压缩质量 (1-200)
+   * set_compression_quality
+   * @param {number} quality - compression_quality (1-200)
    */
   setQuality(quality) {
     if (quality < 1 || quality > 200) {
@@ -367,8 +367,8 @@ class WasmGifScaler {
   }
 
   /**
-   * 设置优化级别
-   * @param {number} level - 优化级别 (1-3)
+   * set_optimization_level
+   * @param {number} level - optimization_level (1-3)
    */
   setOptimizationLevel(level) {
     if (level < 1 || level > 3) {

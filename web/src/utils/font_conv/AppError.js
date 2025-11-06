@@ -1,12 +1,12 @@
 // Custom Error type to simplify error messaging
-// ES6 版本
+// ES6 version
 
 class AppError extends Error {
   constructor(message) {
     super(message)
     this.name = 'AppError'
     
-    // 保持堆栈跟踪 (仅在 V8 引擎中可用)
+    // keep_stack_trace (only_in V8 available_in_engine)
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, AppError)
     }

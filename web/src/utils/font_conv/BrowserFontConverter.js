@@ -1,6 +1,6 @@
 /**
- * BrowserFontConverter - 完整的浏览器端字体转换器
- * 基于 lv_font_conv 的核心逻辑，适配浏览器环境
+ * BrowserFontConverter - complete_browserside_font_converter
+ * based_on lv_font_conv the_core_logic_of，adapt_to_browser_environment
  */
 
 import opentype from 'opentype.js'
@@ -12,17 +12,17 @@ class BrowserFontConverter {
   constructor() {
     this.initialized = false
     this.supportedFormats = ['ttf', 'woff', 'woff2', 'otf']
-    this.charsetCache = new Map() // 缓存已加载的字符集
+    this.charsetCache = new Map() // cache_loaded_character_sets
   }
 
   /**
-   * 初始化转换器
+   * initialize_converter
    */
   async initialize() {
     if (this.initialized) return
     
     try {
-      // 检查依赖是否可用
+      // check_if_dependencies_are_available
       if (typeof opentype === 'undefined') {
         throw new Error('opentype.js not loaded')
       }
@@ -36,7 +36,7 @@ class BrowserFontConverter {
   }
 
   /**
-   * 验证字体文件
+   * verify_font_files
    */
   validateFont(fontFile) {
     if (!fontFile) return false
@@ -62,7 +62,7 @@ class BrowserFontConverter {
   }
 
   /**
-   * 获取字体信息
+   * get_font_information
    */
   async getFontInfo(fontFile) {
     try {
@@ -100,18 +100,18 @@ class BrowserFontConverter {
   }
 
   /**
-   * 获取本地化名称
+   * get_localized_name
    */
   getLocalizedName(nameObj) {
     if (!nameObj) return null
     
-    // 优先级：中文 > 英文 > 第一个可用的
+    // priority：chinese > english > first_available
     return nameObj['zh'] || nameObj['zh-CN'] || nameObj['en'] || 
            nameObj[Object.keys(nameObj)[0]]
   }
 
   /**
-   * 转换字体为 CBIN 格式
+   * convert_font_to CBIN format
    */
   async convertToCBIN(options) {
     if (!this.initialized) {
@@ -139,7 +139,7 @@ class BrowserFontConverter {
     try {
       if (progressCallback) progressCallback(0, 'Starting font processing...')
 
-      // 准备字体数据
+      // prepare_font_data
       let fontBuffer
       if (fontFile instanceof File) {
         fontBuffer = await fontFile.arrayBuffer()
@@ -149,12 +149,12 @@ class BrowserFontConverter {
 
       if (progressCallback) progressCallback(10, 'Parsing font structure...')
 
-      // 构建字符范围和符号（使用异步版本支持从文件加载字符集）
+      // build_character_ranges_and_symbols（support_for_loading_character_sets_from_files_using_the_asynchronous_version）
       const { ranges, charSymbols } = await this.parseCharacterInputAsync(charset, symbols, range)
 
       if (progressCallback) progressCallback(20, 'Preparing conversion parameters...')
 
-      // 构建转换参数
+      // build_conversion_parameters
       const convertArgs = {
         font: [{
           source_path: fontName || 'custom_font',
@@ -179,12 +179,12 @@ class BrowserFontConverter {
 
       if (progressCallback) progressCallback(30, 'Collecting font data...')
 
-      // 收集字体数据
+      // collect_font_data
       const fontData = await collect_font_data(convertArgs)
 
       if (progressCallback) progressCallback(70, 'Generating CBIN format...')
 
-      // 生成 CBIN 数据
+      // generate CBIN data
       const result = write_cbin(convertArgs, fontData)
       const outputName = convertArgs.output
       
@@ -199,19 +199,19 @@ class BrowserFontConverter {
   }
 
   /**
-   * 解析字符输入（字符集、符号、范围）- 异步版本
+   * parse_character_input（character_set、symbol、scope）- asynchronous_version
    */
   async parseCharacterInputAsync(charset, symbols, range) {
     let ranges = []
     let charSymbols = symbols || ''
 
-    // 处理预设字符集
+    // handle_default_character_sets
     if (charset && charset !== 'custom') {
       const presetChars = await this.getCharsetContentAsync(charset)
       charSymbols = presetChars + charSymbols
     }
 
-    // 处理 Unicode 范围
+    // deal_with Unicode scope
     if (range) {
       ranges = this.parseUnicodeRange(range)
     }
@@ -220,19 +220,19 @@ class BrowserFontConverter {
   }
 
   /**
-   * 解析字符输入（字符集、符号、范围）- 同步版本（向后兼容）
+   * parse_character_input（character_set、symbol、scope）- sync_version（backwards_compatible）
    */
   parseCharacterInput(charset, symbols, range) {
     let ranges = []
     let charSymbols = symbols || ''
 
-    // 处理预设字符集
+    // handle_default_character_sets
     if (charset && charset !== 'custom') {
       const presetChars = this.getCharsetContent(charset)
       charSymbols = presetChars + charSymbols
     }
 
-    // 处理 Unicode 范围
+    // deal_with Unicode scope
     if (range) {
       ranges = this.parseUnicodeRange(range)
     }
@@ -242,7 +242,7 @@ class BrowserFontConverter {
 
 
   /**
-   * 异步加载字符集文件
+   * asynchronously_load_character_set_files
    */
   async loadCharsetFromFile(charset) {
     const charsetFiles = {
@@ -263,10 +263,10 @@ class BrowserFontConverter {
       }
       
       const text = await response.text()
-      // 将每行的字符连接成一个字符串，保留所有字符（包括空白字符）
+      // concatenate_the_characters_of_each_line_into_a_string，keep_all_characters（include_whitespace_characters）
       const characters = text.split('\n').join('')
       
-      // 缓存结果
+      // cache_results
       this.charsetCache.set(charset, characters)
       return characters
     } catch (error) {
@@ -276,40 +276,40 @@ class BrowserFontConverter {
   }
 
   /**
-   * 获取字符集内容（同步方法，用于已缓存的字符集）
+   * get_character_set_content（sync_method，for_cached_character_sets）
    */
   getCharsetContent(charset) {
     const charsets = {}
     
-    // 如果是需要从文件加载的字符集，先检查缓存
+    // if_it_is_a_character_set_that_needs_to_be_loaded_from_a_file，check_cache_first
     if ((charset === 'latin' || charset === 'deepseek' || charset === 'gb2312') && this.charsetCache.has(charset)) {
       return this.charsetCache.get(charset)
     }
     
-    // 如果请求 basic，重定向到 latin（向后兼容）
+    // if_requested basic，redirect_to latin（backwards_compatible）
     if (charset === 'basic') {
       return this.getCharsetContent('latin')
     }
     
-    // 默认返回空字符串，需要先调用异步方法加载
+    // returns_empty_string_by_default，need_to_call_the_asynchronous_method_to_load_first
     return charsets[charset] || ''
   }
 
   /**
-   * 异步获取字符集内容
+   * asynchronously_obtain_character_set_content
    */
   async getCharsetContentAsync(charset) {
-    // 如果请求 basic，重定向到 latin（向后兼容）
+    // if_requested basic，redirect_to latin（backwards_compatible）
     if (charset === 'basic') {
       charset = 'latin'
     }
     
-    // 如果字符集已缓存，直接返回
+    // if_the_character_set_is_cached，return_directly
     if (this.charsetCache.has(charset)) {
       return this.charsetCache.get(charset)
     }
     
-    // 对于需要从文件加载的字符集
+    // for_character_sets_that_need_to_be_loaded_from_a_file
     if (charset === 'latin' || charset === 'deepseek' || charset === 'gb2312') {
       const loadedCharset = await this.loadCharsetFromFile(charset)
       if (loadedCharset) {
@@ -317,12 +317,12 @@ class BrowserFontConverter {
       }
     }
     
-    // 回退到同步方法
+    // fallback_to_synchronous_method
     return this.getCharsetContent(charset)
   }
 
   /**
-   * 解析 Unicode 范围字符串
+   * parse Unicode range_string
    */
   parseUnicodeRange(rangeStr) {
     const ranges = []
@@ -352,7 +352,7 @@ class BrowserFontConverter {
   }
 
   /**
-   * 解析十六进制或十进制数字
+   * parse_hexadecimal_or_decimal_numbers
    */
   parseHexOrDec(str) {
     const trimmed = str.trim()
@@ -367,12 +367,12 @@ class BrowserFontConverter {
   }
 
   /**
-   * 估算输出大小 - 异步版本
+   * estimate_output_size - asynchronous_version
    */
   async estimateSizeAsync(options) {
     const { fontSize = 20, bpp = 4, charset = 'latin', symbols = '', range = '' } = options
     
-    // 计算字符数量
+    // count_the_number_of_characters
     let charCount = symbols.length
     
     if (charset && charset !== 'custom') {
@@ -387,13 +387,13 @@ class BrowserFontConverter {
       }
     }
     
-    // 去重字符数（粗略估算）
+    // number_of_characters_to_remove_duplicates（rough_estimate）
     charCount = Math.min(charCount, charCount * 0.8)
     
-    // 估算每个字符的字节数
+    // estimate_the_number_of_bytes_per_character
     const avgBytesPerChar = Math.ceil((fontSize * fontSize * bpp) / 8) + 40
     
-    const estimatedSize = charCount * avgBytesPerChar + 2048 // 加上头部和索引
+    const estimatedSize = charCount * avgBytesPerChar + 2048 // add_header_and_index
     
     return {
       characterCount: Math.floor(charCount),
@@ -404,12 +404,12 @@ class BrowserFontConverter {
   }
 
   /**
-   * 估算输出大小 - 同步版本（向后兼容）
+   * estimate_output_size - sync_version（backwards_compatible）
    */
   estimateSize(options) {
     const { fontSize = 20, bpp = 4, charset = 'latin', symbols = '', range = '' } = options
     
-    // 计算字符数量
+    // count_the_number_of_characters
     let charCount = symbols.length
     
     if (charset && charset !== 'custom') {
@@ -424,13 +424,13 @@ class BrowserFontConverter {
       }
     }
     
-    // 去重字符数（粗略估算）
+    // number_of_characters_to_remove_duplicates（rough_estimate）
     charCount = Math.min(charCount, charCount * 0.8)
     
-    // 估算每个字符的字节数
+    // estimate_the_number_of_bytes_per_character
     const avgBytesPerChar = Math.ceil((fontSize * fontSize * bpp) / 8) + 40
     
-    const estimatedSize = charCount * avgBytesPerChar + 2048 // 加上头部和索引
+    const estimatedSize = charCount * avgBytesPerChar + 2048 // add_header_and_index
     
     return {
       characterCount: Math.floor(charCount),
@@ -441,7 +441,7 @@ class BrowserFontConverter {
   }
 
   /**
-   * 格式化字节大小
+   * format_byte_size
    */
   formatBytes(bytes) {
     if (bytes === 0) return '0 Bytes'
@@ -454,15 +454,15 @@ class BrowserFontConverter {
   }
 
   /**
-   * 清理资源
+   * clean_up_resources
    */
   cleanup() {
-    // 清理可能的资源引用
+    // clean_up_possible_resource_references
     this.initialized = false
   }
 }
 
-// 创建单例实例
+// create_a_singleton_instance
 const browserFontConverter = new BrowserFontConverter()
 
 export default browserFontConverter

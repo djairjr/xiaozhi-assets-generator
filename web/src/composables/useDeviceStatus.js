@@ -1,6 +1,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-// 全局共享的设备状态
+// global_shared_device_status
 const deviceStatus = ref({
   isOnline: false,
   error: '',
@@ -21,13 +21,13 @@ const token = ref('')
 const isChecking = ref(false)
 const retryTimer = ref(null)
 
-// 获取URL参数
+// get_url_parameters
 const getUrlParameter = (name) => {
   const urlParams = new URLSearchParams(window.location.search)
   return urlParams.get(name)
 }
 
-// 调用MCP工具
+// call_mcp_tool
 const callMcpTool = async (toolName, params = {}) => {
   if (!token.value) {
     throw new Error('Authentication token not found')
@@ -52,7 +52,7 @@ const callMcpTool = async (toolName, params = {}) => {
     const errorText = await response.text()
     console.error(`MCP tool ${toolName} failed:`, response.status, errorText)
     
-    // 解析错误信息
+    // parse_error_message
     let errorMessage = `Failed to call ${toolName}`
     try {
       const errorData = JSON.parse(errorText)
@@ -60,7 +60,7 @@ const callMcpTool = async (toolName, params = {}) => {
         errorMessage = errorData.message
       }
     } catch (e) {
-      // 如果解析失败，使用HTTP状态码
+      // if_parsing_fails，using_http_status_codes
       errorMessage = `${errorMessage}: HTTP ${response.status}`
     }
     
@@ -68,17 +68,17 @@ const callMcpTool = async (toolName, params = {}) => {
   }
 }
 
-// 获取设备详细信息
+// get_device_details
 const fetchDeviceInfo = async () => {
   try {
-    // 并发获取所有设备信息
+    // get_all_device_information_concurrently
     const [systemInfoResponse, deviceStateResponse, screenInfoResponse] = await Promise.allSettled([
       callMcpTool('self.get_system_info'),
       callMcpTool('self.get_device_status'),
       callMcpTool('self.screen.get_info')
     ])
 
-    // 处理系统信息
+    // handle_system_information
     if (systemInfoResponse.status === 'fulfilled' && systemInfoResponse.value) {
       const data = systemInfoResponse.value.data || systemInfoResponse.value
 
@@ -86,7 +86,7 @@ const fetchDeviceInfo = async () => {
       deviceInfo.value.board = { model: data.board?.name || 'Unknown' }
       deviceInfo.value.firmware = { version: data.application?.version || 'Unknown' }
 
-      // 获取Flash大小
+      // get_flash_size
       if (data.flash_size) {
         const sizeInMB = Math.round(data.flash_size / 1024 / 1024)
         deviceInfo.value.flash = { size: `${sizeInMB}MB` }
@@ -94,7 +94,7 @@ const fetchDeviceInfo = async () => {
         deviceInfo.value.flash = { size: 'Unknown' }
       }
 
-      // 获取assets分区大小
+      // get_assets_partition_size
       if (data.partition_table) {
         const assetsPartition = data.partition_table.find(p => p.label === 'assets')
         if (assetsPartition) {
@@ -117,7 +117,7 @@ const fetchDeviceInfo = async () => {
       deviceInfo.value.assetsPartition = null
     }
 
-    // 处理设备状态信息
+    // handle_device_status_information
     if (deviceStateResponse.status === 'fulfilled' && deviceStateResponse.value) {
       const data = deviceStateResponse.value.data || deviceStateResponse.value
 
@@ -130,7 +130,7 @@ const fetchDeviceInfo = async () => {
       deviceInfo.value.network = { type: 'unknown', signal: 'Unknown' }
     }
 
-    // 处理屏幕信息
+    // process_screen_information
     if (screenInfoResponse.status === 'fulfilled' && screenInfoResponse.value) {
       const data = screenInfoResponse.value.data || screenInfoResponse.value
 
@@ -146,7 +146,7 @@ const fetchDeviceInfo = async () => {
   }
 }
 
-// 检查设备是否在线
+// check_if_the_device_is_online
 const checkDeviceStatus = async () => {
   if (isChecking.value || !token.value) return
 
@@ -165,7 +165,7 @@ const checkDeviceStatus = async () => {
       deviceStatus.value.error = ''
       deviceStatus.value.lastCheck = new Date()
 
-      // 获取设备详细信息
+      // get_device_details
       await fetchDeviceInfo()
     } else {
       throw new Error(`HTTP ${response.status}: ${response.statusText}`)
@@ -175,7 +175,7 @@ const checkDeviceStatus = async () => {
     deviceStatus.value.error = ''
     deviceStatus.value.lastCheck = new Date()
 
-    // 30秒后重试
+    // Try again after 30 seconds
     if (retryTimer.value) {
       clearTimeout(retryTimer.value)
     }
@@ -185,7 +185,7 @@ const checkDeviceStatus = async () => {
   }
 }
 
-// 格式化信号强度显示文本（已移至组件中实现国际化）
+// format_signal_strength_display_text（moved_to_components_for_internationalization）
 const getSignalDisplayText = (signal, t) => {
   if (!signal) return t('device.signal.unknown')
 
@@ -203,7 +203,7 @@ const getSignalDisplayText = (signal, t) => {
   }
 }
 
-// 初始化设备状态监控
+// initialize_device_status_monitoring
 const initializeDeviceStatus = () => {
   token.value = getUrlParameter('token')
   if (token.value) {
@@ -211,7 +211,7 @@ const initializeDeviceStatus = () => {
   }
 }
 
-// 清理资源
+// clean_up_resources
 const cleanupDeviceStatus = () => {
   if (retryTimer.value) {
     clearTimeout(retryTimer.value)
@@ -219,29 +219,29 @@ const cleanupDeviceStatus = () => {
   }
 }
 
-// 手动刷新设备状态
+// manually_refresh_device_status
 const refreshDeviceStatus = async () => {
   await checkDeviceStatus()
 }
 
 /**
- * 设备状态 Composable
- * 用于在整个应用中共享设备状态和设备信息
+ * device_status Composable
+ * used_to_share_device_status_and_device_information_throughout_the_app
  */
 export function useDeviceStatus() {
-  // 计算属性
+  // computed_properties
   const hasToken = computed(() => !!token.value)
   const isDeviceOnline = computed(() => deviceStatus.value.isOnline)
 
   return {
-    // 状态
+    // state
     deviceStatus,
     deviceInfo,
     isChecking,
     hasToken,
     isDeviceOnline,
     
-    // 方法
+    // method
     initializeDeviceStatus,
     cleanupDeviceStatus,
     refreshDeviceStatus,
